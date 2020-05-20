@@ -32,10 +32,10 @@ import prestodb.redirect
 from prestodb.transaction import Transaction, IsolationLevel, NO_TRANSACTION
 
 
-__all__ = ["connect", "Connection", "Cursor"]
+__all__ = ['connect', 'Connection', 'Cursor']
 
 
-apilevel = "2.0"
+apilevel = '2.0'
 threadsafety = 2
 
 logger = prestodb.logging.get_logger(__name__)
@@ -58,12 +58,13 @@ class Connection(object):
     client implementation yet.
 
     """
-
     def __init__(
         self,
         host,
         port=constants.DEFAULT_PORT,
         user=None,
+        password=None,
+        resource_group="default",
         source=constants.DEFAULT_SOURCE,
         catalog=constants.DEFAULT_CATALOG,
         schema=constants.DEFAULT_SCHEMA,
@@ -79,6 +80,8 @@ class Connection(object):
         self.host = host
         self.port = port
         self.user = user
+        self.password = password
+        self.resource_group = resource_group
         self.source = source
         self.catalog = catalog
         self.schema = schema
@@ -133,7 +136,7 @@ class Connection(object):
 
     def rollback(self):
         if self.transaction is None:
-            raise RuntimeError("no transaction was started")
+            raise RuntimeError('no transaction was started')
         self._transaction.rollback()
         self._transaction = None
 
@@ -142,6 +145,8 @@ class Connection(object):
             self.host,
             self.port,
             self.user,
+            self.password,
+            self.resource_group,
             self.source,
             self.catalog,
             self.schema,
@@ -174,12 +179,12 @@ class Cursor(object):
     cursor are immediately visible by other cursors or connections.
 
     """
-
     def __init__(self, connection, request):
         if not isinstance(connection, Connection):
             raise ValueError(
-                "connection must be a Connection object: {}".format(type(connection))
-            )
+                'connection must be a Connection object: {}'.format(
+                    type(connection)
+                ))
         self._connection = connection
         self._request = request
 
@@ -198,8 +203,7 @@ class Cursor(object):
 
         # [ (name, type_code, display_size, internal_size, precision, scale, null_ok) ]
         return [
-            (col["name"], col["type"], None, None, None, None, None)
-            for col in self._query.columns
+            (col['name'], col['type'], None, None, None, None, None) for col in self._query.columns
         ]
 
     @property
@@ -217,12 +221,6 @@ class Cursor(object):
     def stats(self):
         if self._query is not None:
             return self._query.stats
-        return None
-
-    @property
-    def warnings(self):
-        if self._query is not None:
-            return self._query.warnings
         return None
 
     def setinputsizes(self, sizes):
@@ -301,9 +299,7 @@ class Cursor(object):
 
     def cancel(self):
         if self._query is None:
-            raise prestodb.exceptions.OperationalError(
-                "Cancel query failed; no running query"
-            )
+            raise prestodb.exceptions.OperationalError("Cancel query failed; no running query")
         self._query.cancel()
 
     def close(self):
@@ -322,10 +318,11 @@ def TimeFromTicks(ticks):
 
 
 def Binary(string):
-    return string.encode("utf-8")
+    return string.encode('utf-8')
 
 
 class DBAPITypeObject:
+
     def __init__(self, *values):
         self.values = [v.lower() for v in values]
 
@@ -333,24 +330,15 @@ class DBAPITypeObject:
         return other.lower() in self.values
 
 
-STRING = DBAPITypeObject("VARCHAR", "CHAR", "VARBINARY", "JSON", "IPADDRESS")
+STRING = DBAPITypeObject('VARCHAR', 'CHAR', 'VARBINARY', 'JSON', 'IPADDRESS')
 
-BINARY = DBAPITypeObject(
-    "ARRAY", "MAP", "ROW", "HyperLogLog", "P4HyperLogLog", "QDigest"
-)
+BINARY = DBAPITypeObject('ARRAY', 'MAP', 'ROW', 'HyperLogLog', 'P4HyperLogLog', 'QDigest')
 
-NUMBER = DBAPITypeObject(
-    "BOOLEAN", "TINYINT", "SMALLINT", "INTEGER", "BIGINT", "REAL", "DOUBLE", "DECIMAL"
-)
+NUMBER = DBAPITypeObject('BOOLEAN', 'TINYINT', 'SMALLINT', 'INTEGER', 'BIGINT',
+                         'REAL', 'DOUBLE', 'DECIMAL')
 
-DATETIME = DBAPITypeObject(
-    "DATE",
-    "TIME",
-    "TIME WITH TIME ZONE",
-    "TIMESTAMP",
-    "TIMESTAMP WITH TIME ZONE",
-    "INTERVAL YEAR TO MONTH",
-    "INTERVAL DAY TO SECOND",
-)
+DATETIME = DBAPITypeObject('DATE', 'TIME', 'TIME WITH TIME ZONE', 'TIMESTAMP',
+                           'TIMESTAMP WITH TIME ZONE', 'INTERVAL YEAR TO MONTH',
+                           'INTERVAL DAY TO SECOND')
 
 ROWID = DBAPITypeObject()  # nothing indicates row id in Presto
