@@ -21,6 +21,7 @@ conn=prestodb.dbapi.connect(
     host='localhost',
     port=8080,
     user='the-user',
+    password = 'the-password',
     catalog='the-catalog',
     schema='the-schema',
 )
@@ -46,6 +47,7 @@ conn=prestodb.dbapi.connect(
     host='coordinator url',
     port=8443,
     user='the-user',
+    password = 'the-password',
     catalog='the-catalog',
     schema='the-schema',
     http_scheme='https',
@@ -67,6 +69,7 @@ with prestodb.dbapi.connect(
     host='localhost',
     port=8080,
     user='the-user',
+    password = 'the-password',
     catalog='the-catalog',
     schema='the-schema',
     isolation_level=transaction.IsolationLevel.REPEATABLE_READ,
